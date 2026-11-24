@@ -12,6 +12,8 @@ const NAV_ITEMS = [
   { to: '/services', label: 'Services' },
   { to: '/ministries', label: 'Ministries' },
   { to: '/activities', label: 'Activities' },
+  { to: '/videos', label: 'Videos' },
+  { to: '/register', label: 'Register' },
   { to: '/prayer', label: 'Prayer' },
   { to: '/contact', label: 'Contact' },
 ];
@@ -42,7 +44,7 @@ export function Layout() {
 
       {/* Sticky 3-Zone Top Bar Contract */}
       <header className="sticky top-0 z-40 bg-[#FAF9F6]/95 backdrop-blur-sm border-b border-[#E5E0D8]">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-8">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4 xl:gap-6">
           {/* Zone 1: Single-line Brand Wordmark */}
           <Link
             to="/"
@@ -58,7 +60,7 @@ export function Layout() {
           {/* Zone 2: Clean Single-Line Navigation Links */}
           <nav
             aria-label="Primary"
-            className="hidden lg:flex items-center gap-5 text-sm font-medium text-[#52525B]"
+            className="hidden lg:flex items-center gap-2.5 xl:gap-3.5 text-sm font-medium text-[#52525B]"
           >
             {NAV_ITEMS.map((item) => (
               <NavLink
@@ -229,6 +231,16 @@ export function Layout() {
                     Church Activities
                   </Link>
                 </li>
+                <li>
+                  <Link to="/videos" className="hover:text-[#1B365D] transition-colors">
+                    Sermons &amp; Videos
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/register" className="hover:text-[#1B365D] transition-colors">
+                    Member Registration
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -247,6 +259,12 @@ export function Layout() {
                   className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-[#1B365D] rounded-lg hover:bg-[#132744] transition-colors whitespace-nowrap"
                 >
                   Plan Your Visit
+                </Link>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-[#1B365D] bg-white border border-[#D6D0C4] rounded-lg hover:bg-[#FAF9F6] transition-colors whitespace-nowrap"
+                >
+                  Member Registration
                 </Link>
                 <Link
                   to="/prayer"

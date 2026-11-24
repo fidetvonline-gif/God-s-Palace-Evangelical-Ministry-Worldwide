@@ -1,11 +1,19 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Calendar, Clock, MapPin } from 'lucide-react';
+import { ArrowRight, Calendar, Clock, ExternalLink, MapPin, Play } from 'lucide-react';
 import { CHURCH_MEDIA, churchConfig } from '../data/churchConfig';
+import { useFacebookVideos } from '../hooks/useFacebookVideos';
 import { filterActivities } from '../utils/churchLogic';
+import { isSafeFacebookUrl } from '../utils/facebookVideoLogic';
 import { ResilientImage } from '../components/ResilientImage';
 import { MinistryIcon } from '../components/MinistryIcon';
 
 export function HomePage() {
+  const { videos: rankedVideos } = useFacebookVideos('latest');
+  const [playingHomeVideo, setPlayingHomeVideo] = useState(false);
+  const topThreeVideos = rankedVideos.slice(0, 3);
+  const leadVideo = topThreeVideos[0];
+
   const featuredServices = churchConfig.services.filter((s) => s.featuredOnHome);
   const featuredMinistries = churchConfig.ministries.filter((m) => m.featured).slice(0, 4);
   const upcomingActivities = filterActivities(churchConfig.activities, 'upcoming').slice(0, 3);
@@ -317,6 +325,151 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* 5b. Connected Facebook Sermons & Videos (Automatically Ranked) */}
+      {leadVideo && (
+        <section className="py-16 sm:py-20 bg-[#F2EFE9]/55 border-b border-[#E5E0D8]">
+          <div className="max-w-6xl mx-auto px-5 sm:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+              <div>
+                <p className="text-xs font-medium tracking-[0.14em] uppercase text-[#8B6F47]">
+                  Connected With Facebook &middot; Automatically Ranked
+                </p>
+                <h2 className="font-serif text-3xl sm:text-4xl font-semibold text-[#18181B] mt-1">
+                  Latest Sermons &amp; Ministry Videos
+                </h2>
+              </div>
+              <Link
+                to="/videos"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#1B365D] hover:underline whitespace-nowrap shrink-0"
+              >
+                <span>Watch all ranked videos</span>
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* #1 Latest / Top Video Card with Inline Play */}
+              <div className="lg:col-span-6 bg-white border border-[#E5E0D8] rounded-xl overflow-hidden">
+                <div className="aspect-video bg-[#111827] relative overflow-hidden">
+                  {playingHomeVideo && isSafeFacebookUrl(leadVideo.url) && leadVideo.embedUrl ? (
+                    <iframe
+                      src={leadVideo.embedUrl}
+                      title={leadVideo.title}
+                      className="w-full h-full border-0"
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPlayingHomeVideo(true)}
+                      className="w-full h-full relative group text-left block"
+                      aria-label={`Play latest Facebook video: ${leadVideo.title}`}
+                    >
+                      <ResilientImage
+                        src={leadVideo.thumbnailUrl || CHURCH_MEDIA.pastorMinistry}
+                        alt={leadVideo.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        containerClassName="w-full h-full"
+                      />
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent"
+                      />
+                      <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-[#1B365D] text-white text-xs font-semibold tabular-nums">
+                        #1 Latest
+                      </span>
+                      <span className="absolute bottom-3 right-3 px-2 py-0.5 rounded bg-black/80 text-white text-xs font-medium tabular-nums">
+                        {leadVideo.durationText}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <span className="w-14 h-14 rounded-full bg-white/95 text-[#1B365D] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                          <Play className="w-6 h-6 fill-current ml-0.5" />
+                        </span>
+                      </span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-[#8B6F47] font-medium tabular-nums">
+                    <span>{leadVideo.publishedText}</span>
+                    {leadVideo.viewsCount > 0 && (
+                      <>
+                        <span aria-hidden="true">&middot;</span>
+                        <span>{leadVideo.viewsCount.toLocaleString()} views</span>
+                      </>
+                    )}
+                  </div>
+                  <h3 className="font-serif text-xl sm:text-2xl font-semibold text-[#18181B] mt-1.5 leading-snug">
+                    {leadVideo.title}
+                  </h3>
+                  <div className="mt-4 flex flex-wrap items-center gap-4">
+                    <Link
+                      to={`/videos?v=${encodeURIComponent(leadVideo.id)}`}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-[#1B365D] hover:underline"
+                    >
+                      <span>Open in Video Player</span>
+                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                    </Link>
+                    <a
+                      href={leadVideo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-[#52525B] hover:text-[#1B365D]"
+                    >
+                      <span>Facebook</span>
+                      <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ranked #1–#3 List */}
+              <div className="lg:col-span-6 space-y-4">
+                {topThreeVideos.map((video, index) => (
+                  <Link
+                    key={video.id}
+                    to={`/videos?v=${encodeURIComponent(video.id)}`}
+                    className="group bg-white border border-[#E5E0D8] hover:border-[#1B365D] rounded-xl p-4 flex items-center gap-4 transition-colors"
+                  >
+                    <div className="relative w-32 sm:w-36 aspect-video rounded-lg overflow-hidden bg-[#18181B] shrink-0">
+                      <ResilientImage
+                        src={video.thumbnailUrl || CHURCH_MEDIA.pastorMinistry}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                        containerClassName="w-full h-full"
+                      />
+                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-[#1B365D] text-white text-[11px] font-semibold tabular-nums">
+                        #{index + 1}
+                      </span>
+                      <span className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/80 text-white text-[10px] font-medium tabular-nums">
+                        {video.durationText}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-[#8B6F47] font-medium tabular-nums">
+                        {video.publishedText}
+                        {video.viewsCount > 0
+                          ? ` · ${video.viewsCount.toLocaleString()} views`
+                          : ''}
+                      </p>
+                      <h3 className="font-serif text-base sm:text-lg font-semibold text-[#18181B] mt-1 line-clamp-2 group-hover:text-[#1B365D] transition-colors">
+                        {video.title}
+                      </h3>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* 6. Pastor & Leadership Introduction */}
       {seniorPastor && (
         <section className="py-16 sm:py-20 bg-white border-b border-[#E5E0D8]">
@@ -335,7 +488,7 @@ export function HomePage() {
 
             <div className="lg:col-span-8">
               <p className="text-xs font-medium tracking-[0.14em] uppercase text-[#8B6F47]">
-                Pastoral Leadership
+                {churchConfig.generalOverseer.subtitle}
               </p>
               <h2 className="font-serif text-3xl sm:text-4xl font-semibold text-[#18181B] mt-2">
                 {churchConfig.about.pastorWelcome.heading}
@@ -353,7 +506,7 @@ export function HomePage() {
                   to="/leadership"
                   className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#1B365D] rounded-lg hover:bg-[#132744] transition-colors whitespace-nowrap"
                 >
-                  <span>Meet Our Leadership</span>
+                  <span>Meet Our General Overseer</span>
                   <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </Link>
               </div>
@@ -379,13 +532,19 @@ export function HomePage() {
                 in comfortably.
               </p>
             </div>
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
                 to="/visit"
                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#1B365D] rounded-lg hover:bg-[#132744] transition-colors whitespace-nowrap"
               >
                 <span>Plan Your Visit</span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#1B365D] border border-[#1B365D] rounded-lg hover:bg-[#1B365D] hover:text-white transition-colors whitespace-nowrap"
+              >
+                <span>Register as Member</span>
               </Link>
             </div>
           </div>

@@ -26,9 +26,9 @@ export function HomePage() {
         <div className="absolute inset-0">
           <ResilientImage
             src={CHURCH_MEDIA.heroSanctuary}
-            alt="Interior of God's Palace Evangelical Ministry Worldwide sanctuary during worship"
+            alt="Rev. Dr. Anthony Agbonmwanre Omorogieva ministering at the altar of God's Palace Evangelical Ministry Worldwide (City of the Great King)"
             loading="eager"
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-cover object-[center_20%]"
             containerClassName="w-full h-full"
           />
           <div
@@ -132,8 +132,8 @@ export function HomePage() {
           <div className="lg:col-span-6 overflow-hidden rounded-xl border border-[#E5E0D8] aspect-[4/3] lg:aspect-auto">
             <ResilientImage
               src={CHURCH_MEDIA.communityFellowship}
-              alt="Congregation members of God's Palace Evangelical Ministry Worldwide greeting warmly"
-              className="w-full h-full object-cover"
+              alt="Multi-generational church family seated together with Bibles during worship at God's Palace Evangelical Ministry Worldwide"
+              className="w-full h-full object-cover object-center"
               containerClassName="w-full h-full min-h-[280px]"
             />
           </div>
@@ -203,8 +203,8 @@ export function HomePage() {
             <div className="lg:col-span-5 overflow-hidden rounded-xl border border-[#E5E0D8] aspect-[4/3] lg:aspect-auto">
               <ResilientImage
                 src={CHURCH_MEDIA.worshipChoir}
-                alt="Sanctuary choir and instrumentalists leading worship"
-                className="w-full h-full object-cover"
+                alt="God's Palace Evangelical Ministry Worldwide sanctuary choir leading worship in white and royal blue uniforms"
+                className="w-full h-full object-cover object-top"
                 containerClassName="w-full h-full min-h-[260px]"
               />
             </div>
@@ -263,9 +263,9 @@ export function HomePage() {
             <div className="lg:col-span-5 bg-white border border-[#E5E0D8] rounded-xl overflow-hidden">
               <div className="aspect-[4/3] overflow-hidden">
                 <ResilientImage
-                  src={CHURCH_MEDIA.pastorMinistry}
-                  alt="Pastor ministering at God's Palace Evangelical Ministry Worldwide"
-                  className="w-full h-full object-cover object-top"
+                  src={CHURCH_MEDIA.sanctuaryPrayer}
+                  alt="Congregation standing in prayer and Scripture reading inside God's Palace Evangelical Ministry Worldwide"
+                  className="w-full h-full object-cover object-center"
                   containerClassName="w-full h-full"
                 />
               </div>

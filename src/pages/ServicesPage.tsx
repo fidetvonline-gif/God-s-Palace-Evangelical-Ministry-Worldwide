@@ -51,8 +51,8 @@ export function ServicesPage() {
               <div className="aspect-[16/9] overflow-hidden">
                 <ResilientImage
                   src={CHURCH_MEDIA.heroSanctuary}
-                  alt="Main sanctuary seating and natural timber ceiling"
-                  className="w-full h-full object-cover"
+                  alt="Rev. Dr. Anthony Agbonmwanre Omorogieva preaching at God's Palace Evangelical Ministry Worldwide sanctuary"
+                  className="w-full h-full object-cover object-[center_20%]"
                   containerClassName="w-full h-full"
                 />
               </div>

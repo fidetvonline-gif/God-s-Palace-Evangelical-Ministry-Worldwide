@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildGoogleFormTemplateChecklist,
+  DEFAULT_MEMBER_GOOGLE_FORM,
+  getDefaultMemberFormConfig,
   MEMBER_REGISTRATION_FIELDS,
   parseGoogleFormUrl,
 } from './memberFormLogic.ts';
@@ -45,6 +47,14 @@ test('parseGoogleFormUrl validates forms.gle short links and rejects unsafe or n
 
   const jsScheme = parseGoogleFormUrl('javascript:alert(1)');
   assert.equal(jsScheme.valid, false);
+});
+
+test('built-in church Google Form default is always valid and ready to embed', () => {
+  const def = getDefaultMemberFormConfig();
+  assert.equal(def.isDefault, true);
+  assert.equal(DEFAULT_MEMBER_GOOGLE_FORM.shortUrl, 'https://forms.gle/TUrY1qNhPUAJP4fQ9');
+  assert.equal(parseGoogleFormUrl(def.viewUrl).valid, true);
+  assert.match(def.embedUrl, /^https:\/\/docs\.google\.com\/forms\/d\/e\/1FAIpQLSdPbKx1DwDvJoFy064m8rka9tdBRfagGmR_3g63fLm9cuf52w\/viewform\?embedded=true$/);
 });
 
 test('member registration template covers required contact, household, and ministry fields', () => {

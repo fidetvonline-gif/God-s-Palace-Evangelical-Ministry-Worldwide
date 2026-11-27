@@ -5,25 +5,20 @@ import {
   ClipboardCopy,
   ExternalLink,
   FileText,
+  RotateCcw,
   Settings2,
-  Trash2,
   UserPlus,
 } from 'lucide-react';
 import { churchConfig } from '../data/churchConfig';
 import {
   buildGoogleFormTemplateChecklist,
+  getDefaultMemberFormConfig,
   MEMBER_REGISTRATION_FIELDS,
   parseGoogleFormUrl,
+  type MemberFormConfig,
 } from '../utils/memberFormLogic';
 import { buildWhatsAppUrl } from '../utils/churchLogic';
 import { PageHeader } from '../components/PageHeader';
-
-interface MemberFormConfig {
-  viewUrl: string;
-  embedUrl: string;
-  formTitle: string;
-  updatedAt: string;
-}
 
 const SECTIONS: Array<'Contact Information' | 'Personal & Household' | 'Church & Ministry Details'> = [
   'Contact Information',
@@ -32,12 +27,12 @@ const SECTIONS: Array<'Contact Information' | 'Personal & Household' | 'Church &
 ];
 
 export function RegisterPage() {
-  const [config, setConfig] = useState<MemberFormConfig | null>(null);
-  const [loading, setLoading] = useState(true);
+  const defaultConfig = getDefaultMemberFormConfig();
+  const [config, setConfig] = useState<MemberFormConfig>(defaultConfig);
   const [showAdminSetup, setShowAdminSetup] = useState(false);
 
-  const [formUrlInput, setFormUrlInput] = useState('');
-  const [formTitleInput, setFormTitleInput] = useState("God's Palace Member Registration Form");
+  const [formUrlInput, setFormUrlInput] = useState(defaultConfig.viewUrl);
+  const [formTitleInput, setFormTitleInput] = useState(defaultConfig.formTitle);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
@@ -49,22 +44,19 @@ export function RegisterPage() {
       .then((res) => res.json())
       .then((data) => {
         if (!active) return;
-        if (data?.ok && data.config) {
+        if (data?.ok && data.config && parseGoogleFormUrl(data.config.embedUrl).valid) {
           setConfig(data.config);
-          setFormUrlInput(data.config.viewUrl || '');
+          setFormUrlInput(data.config.viewUrl || defaultConfig.viewUrl);
           setFormTitleInput(
-            data.config.formTitle || "God's Palace Member Registration Form",
+            data.config.formTitle || defaultConfig.formTitle,
           );
         }
       })
-      .catch(() => {})
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+      .catch(() => {});
     return () => {
       active = false;
     };
-  }, []);
+  }, [defaultConfig.formTitle, defaultConfig.viewUrl]);
 
   const handleConnectForm = async (e: FormEvent) => {
     e.preventDefault();
@@ -102,17 +94,25 @@ export function RegisterPage() {
     }
   };
 
-  const handleDisconnectForm = async () => {
+  const handleRestoreDefaultForm = async () => {
     setSaving(true);
     setError(null);
     setSaveNotice(null);
     try {
-      await fetch('/api/member-form', { method: 'DELETE' });
-      setConfig(null);
-      setFormUrlInput('');
+      const response = await fetch('/api/member-form', { method: 'DELETE' });
+      const data = await response.json().catch(() => null);
+      const restored = data?.config ?? getDefaultMemberFormConfig();
+      setConfig(restored);
+      setFormUrlInput(restored.viewUrl);
+      setFormTitleInput(restored.formTitle);
       setShowAdminSetup(false);
+      setSaveNotice('Restored the official church Google Form.');
     } catch {
-      setError('Unable to disconnect Google Form right now.');
+      const restored = getDefaultMemberFormConfig();
+      setConfig(restored);
+      setFormUrlInput(restored.viewUrl);
+      setFormTitleInput(restored.formTitle);
+      setShowAdminSetup(false);
     } finally {
       setSaving(false);
     }
@@ -139,11 +139,11 @@ export function RegisterPage() {
       <PageHeader
         eyebrow="Church Membership"
         title="Member Registration via Google Form"
-        description="Official membership directory for God's Palace Evangelical Ministry Worldwide (GPEMWW). Complete your contact, household, and ministry details directly through our Google Form."
+        description="Official membership directory for God's Palace Evangelical Ministry Worldwide (GPEMWW). Complete your contact, household, and ministry details directly through our Google Form below."
       />
 
       <section className="py-12 sm:py-16">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 space-y-10">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 space-y-8">
           {saveNotice && (
             <div
               role="status"
@@ -154,17 +154,13 @@ export function RegisterPage() {
             </div>
           )}
 
-          {loading ? (
-            <div className="bg-white border border-[#E5E0D8] rounded-xl p-10 text-center text-sm text-[#52525B]">
-              Loading member registration form...
-            </div>
-          ) : config && parseGoogleFormUrl(config.embedUrl).valid ? (
+          {config && parseGoogleFormUrl(config.embedUrl).valid ? (
             <div className="space-y-6">
               <div className="bg-white border border-[#E5E0D8] rounded-xl overflow-hidden">
                 <div className="px-6 py-4 border-b border-[#E5E0D8] bg-[#FAF9F6] flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-medium tracking-[0.12em] uppercase text-[#8B6F47]">
-                      Official Google Form
+                      Official Google Form · Connected
                     </p>
                     <h2 className="font-serif text-xl sm:text-2xl font-semibold text-[#18181B]">
                       {config.formTitle}
@@ -187,7 +183,7 @@ export function RegisterPage() {
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-[#52525B] bg-white border border-[#D6D0C4] rounded-lg hover:bg-[#F2EFE9] transition-colors whitespace-nowrap"
                     >
                       <Settings2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{showAdminSetup ? 'Hide Form Link Settings' : 'Update Google Form Link'}</span>
+                      <span>{showAdminSetup ? 'Hide Form Settings' : 'Change Google Form'}</span>
                     </button>
                   </div>
                 </div>
@@ -240,15 +236,17 @@ export function RegisterPage() {
                         >
                           {saving ? 'Saving...' : 'Save Updated Link'}
                         </button>
-                        <button
-                          type="button"
-                          onClick={handleDisconnectForm}
-                          disabled={saving}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-[#991B1B] bg-white border border-[#FECACA] rounded-lg hover:bg-[#FEF2F2] transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" aria-hidden="true" />
-                          <span>Remove Form Link</span>
-                        </button>
+                        {!config.isDefault && (
+                          <button
+                            type="button"
+                            onClick={handleRestoreDefaultForm}
+                            disabled={saving}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-[#1B365D] bg-white border border-[#D6D0C4] rounded-lg hover:bg-[#F2EFE9] transition-colors"
+                          >
+                            <RotateCcw className="w-4 h-4" aria-hidden="true" />
+                            <span>Restore Official Form</span>
+                          </button>
+                        )}
                       </div>
                     </form>
                   </div>
@@ -259,7 +257,7 @@ export function RegisterPage() {
                     <iframe
                       src={config.embedUrl}
                       title={config.formTitle}
-                      className="w-full min-h-[780px] border-0"
+                      className="w-full min-h-[820px] border-0"
                     >
                       Loading Google Form...
                     </iframe>
@@ -281,6 +279,36 @@ export function RegisterPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="bg-white border border-[#E5E0D8] rounded-xl px-6 py-5 flex flex-wrap items-center justify-between gap-4 text-sm text-[#52525B]">
+                <p>
+                  Having trouble viewing the embedded form?{' '}
+                  <a
+                    href={config.viewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#1B365D] font-medium hover:underline"
+                  >
+                    Open it directly in Google Forms
+                  </a>{' '}
+                  or reach our church office on{' '}
+                  <a
+                    href={whatsAppHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#14532D] font-medium hover:underline"
+                  >
+                    WhatsApp ({churchConfig.contact.phone})
+                  </a>
+                  .
+                </p>
+                <Link
+                  to="/visit"
+                  className="text-sm font-medium text-[#1B365D] hover:underline whitespace-nowrap"
+                >
+                  Plan a Sunday Visit &rarr;
+                </Link>
               </div>
             </div>
           ) : (

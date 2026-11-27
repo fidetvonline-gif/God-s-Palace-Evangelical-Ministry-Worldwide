@@ -6,6 +6,33 @@ export interface GoogleFormParsedUrls {
   error?: string;
 }
 
+export interface MemberFormConfig {
+  viewUrl: string;
+  embedUrl: string;
+  formTitle: string;
+  updatedAt: string;
+  isDefault?: boolean;
+}
+
+export const DEFAULT_MEMBER_GOOGLE_FORM = {
+  shortUrl: 'https://forms.gle/TUrY1qNhPUAJP4fQ9',
+  viewUrl:
+    'https://docs.google.com/forms/d/e/1FAIpQLSdPbKx1DwDvJoFy064m8rka9tdBRfagGmR_3g63fLm9cuf52w/viewform',
+  embedUrl:
+    'https://docs.google.com/forms/d/e/1FAIpQLSdPbKx1DwDvJoFy064m8rka9tdBRfagGmR_3g63fLm9cuf52w/viewform?embedded=true',
+  formTitle: "God's Palace Member Registration Form",
+} as const;
+
+export function getDefaultMemberFormConfig(): MemberFormConfig {
+  return {
+    viewUrl: DEFAULT_MEMBER_GOOGLE_FORM.viewUrl,
+    embedUrl: DEFAULT_MEMBER_GOOGLE_FORM.embedUrl,
+    formTitle: DEFAULT_MEMBER_GOOGLE_FORM.formTitle,
+    updatedAt: '2026-11-27T00:00:00.000Z',
+    isDefault: true,
+  };
+}
+
 export interface MemberFormFieldSpec {
   id: string;
   section: 'Contact Information' | 'Personal & Household' | 'Church & Ministry Details';

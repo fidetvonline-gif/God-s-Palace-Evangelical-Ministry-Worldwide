@@ -168,24 +168,37 @@ export function LeadershipPage() {
 
       {/* 4. Family & First Home */}
       <section className="py-14 sm:py-16 border-b border-[#E5E0D8] bg-[#F2EFE9]/60">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
-          <div className="bg-white border border-[#E5E0D8] rounded-xl p-8 sm:p-10">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-[#F2EFE9] text-[#1B365D] flex items-center justify-center shrink-0">
-                <Heart className="w-5 h-5" aria-hidden="true" />
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <div className="bg-white border border-[#E5E0D8] rounded-xl p-7 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-[#F2EFE9] text-[#1B365D] flex items-center justify-center shrink-0">
+                  <Heart className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium tracking-[0.14em] uppercase text-[#8B6F47]">
+                    {go.family.eyebrow}
+                  </p>
+                  <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#18181B]">
+                    {go.family.heading}
+                  </h2>
+                </div>
               </div>
-              <div>
-                <p className="text-xs font-medium tracking-[0.14em] uppercase text-[#8B6F47]">
-                  {go.family.eyebrow}
-                </p>
-                <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#18181B]">
-                  {go.family.heading}
-                </h2>
+              <p className="mt-4 text-base text-[#52525B] leading-relaxed">
+                {go.family.body}
+              </p>
+            </div>
+
+            <div className="lg:col-span-5">
+              <div className="aspect-[4/3] overflow-hidden rounded-xl border border-[#E5E0D8]">
+                <ResilientImage
+                  src={go.family.photo}
+                  alt="Rev. Dr. Anthony Agbonmwanre Omorogieva and his wife worshipping together at GPEMWW"
+                  className="w-full h-full object-cover object-top"
+                  containerClassName="w-full h-full"
+                />
               </div>
             </div>
-            <p className="mt-4 text-base text-[#52525B] leading-relaxed">
-              {go.family.body}
-            </p>
           </div>
         </div>
       </section>

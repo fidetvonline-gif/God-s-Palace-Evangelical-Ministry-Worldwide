@@ -10,7 +10,11 @@ import {
   validateSubmission,
   type SubmissionPayload,
 } from './src/utils/churchLogic.ts';
-import { parseGoogleFormUrl } from './src/utils/memberFormLogic.ts';
+import {
+  getDefaultMemberFormConfig,
+  parseGoogleFormUrl,
+  type MemberFormConfig,
+} from './src/utils/memberFormLogic.ts';
 import { rankFacebookVideos, type VideoSortMode } from './src/utils/facebookVideoLogic.ts';
 import {
   getRankedFacebookVideos,
@@ -31,14 +35,7 @@ const DATA_DIR = path.resolve(process.cwd(), 'data');
 const SUBMISSIONS_FILE = path.join(DATA_DIR, 'submissions.json');
 const MEMBER_FORM_CONFIG_FILE = path.join(DATA_DIR, 'member-form-config.json');
 
-interface MemberFormConfig {
-  viewUrl: string;
-  embedUrl: string;
-  formTitle: string;
-  updatedAt: string;
-}
-
-async function readMemberFormConfig(): Promise<MemberFormConfig | null> {
+async function readMemberFormConfig(): Promise<MemberFormConfig> {
   const envUrl = (process.env.MEMBER_GOOGLE_FORM_URL || '').trim();
   if (envUrl) {
     const parsedEnv = parseGoogleFormUrl(envUrl);
@@ -48,6 +45,7 @@ async function readMemberFormConfig(): Promise<MemberFormConfig | null> {
         embedUrl: parsedEnv.embedUrl,
         formTitle: "God's Palace Member Registration Form",
         updatedAt: new Date().toISOString(),
+        isDefault: false,
       };
     }
   }
@@ -55,12 +53,12 @@ async function readMemberFormConfig(): Promise<MemberFormConfig | null> {
     const raw = await fs.readFile(MEMBER_FORM_CONFIG_FILE, 'utf8');
     const parsed = JSON.parse(raw) as MemberFormConfig;
     if (parsed && parsed.viewUrl && parseGoogleFormUrl(parsed.viewUrl).valid) {
-      return parsed;
+      return { ...parsed, isDefault: false };
     }
   } catch {
-    // No saved Google Form yet
+    // No custom override saved; fall back to built-in official church Google Form
   }
-  return null;
+  return getDefaultMemberFormConfig();
 }
 
 async function writeMemberFormConfig(config: MemberFormConfig): Promise<void> {
@@ -293,7 +291,7 @@ async function startServer() {
     } catch {
       // Ignore if already absent
     }
-    res.json({ ok: true, config: null });
+    res.json({ ok: true, config: getDefaultMemberFormConfig() });
   });
 
   // Single unified submission endpoint for Visitor, Prayer Request, and Contact forms.

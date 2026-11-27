@@ -33,14 +33,14 @@ export function AboutPage() {
           <div className="lg:col-span-5">
             <div className="overflow-hidden rounded-xl border border-[#E5E0D8] aspect-[4/3]">
               <ResilientImage
-                src={CHURCH_MEDIA.communityFellowship}
-                alt="Members of the church sharing fellowship after service"
-                className="w-full h-full object-cover"
+                src={CHURCH_MEDIA.sanctuaryPrayer}
+                alt="Members standing in prayer and Scripture reading inside the GPEMWW sanctuary"
+                className="w-full h-full object-cover object-center"
                 containerClassName="w-full h-full"
               />
             </div>
             <p className="mt-2.5 text-xs italic text-[#71717A]">
-              Fellowship in the foyer following Sunday morning worship.
+              Members standing in prayer and Scripture reading inside the GPEMWW sanctuary.
             </p>
           </div>
         </div>

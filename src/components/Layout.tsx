@@ -298,12 +298,23 @@ export function Layout() {
             </div>
           </div>
 
-          <div className="mt-12 pt-6 border-t border-[#DFD9CE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#71717A]">
-            <p>
-              &copy; {new Date().getFullYear()} {churchConfig.identity.name}. All rights
-              reserved.
-            </p>
-            <div className="flex items-center gap-4">
+          <div className="mt-12 pt-6 border-t border-[#DFD9CE] flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-[#71717A]">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <p>
+                &copy; {new Date().getFullYear()} {churchConfig.identity.name}. All rights
+                reserved.
+              </p>
+              <span aria-hidden="true">&middot;</span>
+              <a
+                href="https://fidelissibe.fidetv.online/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-[#52525B] hover:text-[#1B365D] underline decoration-[#D6D0C4] underline-offset-4 transition-colors"
+              >
+                Powered by Fidetvmedia Studio
+              </a>
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
               <Link to="/visit" className="hover:text-[#18181B]">
                 First-Time Visitors
               </Link>

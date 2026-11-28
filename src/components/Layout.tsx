@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { to: '/activities', label: 'Activities' },
   { to: '/videos', label: 'Videos' },
   { to: '/register', label: 'Register' },
+  { to: '/give', label: 'Give' },
   { to: '/prayer', label: 'Prayer' },
   { to: '/contact', label: 'Contact' },
 ];
@@ -60,7 +61,7 @@ export function Layout() {
           {/* Zone 2: Clean Single-Line Navigation Links */}
           <nav
             aria-label="Primary"
-            className="hidden lg:flex items-center gap-2.5 xl:gap-3.5 text-sm font-medium text-[#52525B]"
+            className="hidden lg:flex items-center gap-2 xl:gap-3 text-sm font-medium text-[#52525B]"
           >
             {NAV_ITEMS.map((item) => (
               <NavLink
@@ -135,6 +136,12 @@ export function Layout() {
                 className="w-full text-center px-4 py-3 text-sm font-medium text-white bg-[#1B365D] rounded-lg hover:bg-[#132744] transition-colors"
               >
                 Plan Your Visit
+              </Link>
+              <Link
+                to="/give"
+                className="w-full text-center px-4 py-3 text-sm font-medium text-[#1B365D] border border-[#E5E0D8] rounded-lg hover:bg-[#F2EFE9] transition-colors"
+              >
+                Tithes &amp; Offerings
               </Link>
               <Link
                 to="/prayer"
@@ -241,6 +248,11 @@ export function Layout() {
                     Member Registration
                   </Link>
                 </li>
+                <li>
+                  <Link to="/give" className="hover:text-[#1B365D] transition-colors">
+                    Tithes &amp; Offerings
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -259,6 +271,12 @@ export function Layout() {
                   className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-[#1B365D] rounded-lg hover:bg-[#132744] transition-colors whitespace-nowrap"
                 >
                   Plan Your Visit
+                </Link>
+                <Link
+                  to="/give"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-[#1B365D] bg-white border border-[#D6D0C4] rounded-lg hover:bg-[#FAF9F6] transition-colors whitespace-nowrap"
+                >
+                  Tithes &amp; Offerings
                 </Link>
                 <Link
                   to="/register"

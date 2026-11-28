@@ -11,6 +11,7 @@ import { VisitPage } from './pages/VisitPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { PrayerPage } from './pages/PrayerPage';
 import { ContactPage } from './pages/ContactPage';
+import { GivingPage } from './pages/GivingPage';
 
 export default function App() {
   return (
@@ -26,6 +27,9 @@ export default function App() {
           <Route path="activities" element={<ActivitiesPage />} />
           <Route path="videos" element={<VideosPage />} />
           <Route path="register" element={<RegisterPage />} />
+          <Route path="give" element={<GivingPage />} />
+          <Route path="giving" element={<GivingPage />} />
+          <Route path="tithes" element={<GivingPage />} />
           <Route path="visit" element={<VisitPage />} />
           <Route path="prayer" element={<PrayerPage />} />
           <Route path="contact" element={<ContactPage />} />

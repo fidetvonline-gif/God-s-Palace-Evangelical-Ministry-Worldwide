@@ -1,18 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar, Clock, ExternalLink, MapPin, Play } from 'lucide-react';
 import { CHURCH_MEDIA, churchConfig } from '../data/churchConfig';
 import { useFacebookVideos } from '../hooks/useFacebookVideos';
 import { filterActivities } from '../utils/churchLogic';
 import { isSafeFacebookUrl } from '../utils/facebookVideoLogic';
+import type { GivingConfig } from '../utils/givingLogic';
 import { ResilientImage } from '../components/ResilientImage';
 import { MinistryIcon } from '../components/MinistryIcon';
 
 export function HomePage() {
   const { videos: rankedVideos } = useFacebookVideos('latest');
   const [playingHomeVideo, setPlayingHomeVideo] = useState(false);
+  const [givingConfig, setGivingConfig] = useState<GivingConfig | null>(null);
   const topThreeVideos = rankedVideos.slice(0, 3);
   const leadVideo = topThreeVideos[0];
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/giving-config')
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data?.ok && data.config) {
+          setGivingConfig(data.config);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const featuredServices = churchConfig.services.filter((s) => s.featuredOnHome);
   const featuredMinistries = churchConfig.ministries.filter((m) => m.featured).slice(0, 4);
@@ -515,58 +532,90 @@ export function HomePage() {
         </section>
       )}
 
-      {/* 7. Visitor Connection & Prayer Request Section */}
+      {/* 7. Visitor Connection, Tithes & Giving, and Prayer Request Section */}
       <section className="py-16 sm:py-20 bg-[#F2EFE9]/70">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white border border-[#E5E0D8] rounded-xl p-8 flex flex-col justify-between">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="bg-white border border-[#E5E0D8] rounded-xl p-7 flex flex-col justify-between">
             <div>
               <p className="text-xs font-medium tracking-[0.14em] uppercase text-[#8B6F47]">
                 First-Time Guests
               </p>
-              <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#18181B] mt-2">
+              <h2 className="font-serif text-2xl font-semibold text-[#18181B] mt-2">
                 Planning Your First Visit?
               </h2>
-              <p className="mt-3 text-sm sm:text-base text-[#52525B] leading-relaxed">
+              <p className="mt-3 text-sm text-[#52525B] leading-relaxed">
                 Let us know which Sunday works for you. Our welcome team can meet you at
-                the entrance, guide you to children&rsquo;s check-in, and help you settle
-                in comfortably.
+                the entrance and help you settle in comfortably.
               </p>
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link
                 to="/visit"
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#1B365D] rounded-lg hover:bg-[#132744] transition-colors whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#1B365D] rounded-lg hover:bg-[#132744] transition-colors whitespace-nowrap"
               >
                 <span>Plan Your Visit</span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
               <Link
                 to="/register"
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#1B365D] border border-[#1B365D] rounded-lg hover:bg-[#1B365D] hover:text-white transition-colors whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[#1B365D] border border-[#1B365D] rounded-lg hover:bg-[#1B365D] hover:text-white transition-colors whitespace-nowrap"
               >
-                <span>Register as Member</span>
+                <span>Register</span>
               </Link>
             </div>
           </div>
 
-          <div className="bg-white border border-[#E5E0D8] rounded-xl p-8 flex flex-col justify-between">
+          <div className="bg-white border border-[#E5E0D8] rounded-xl p-7 flex flex-col justify-between">
+            <div>
+              <p className="text-xs font-medium tracking-[0.14em] uppercase text-[#8B6F47]">
+                Stewardship &amp; Giving
+              </p>
+              <h2 className="font-serif text-2xl font-semibold text-[#18181B] mt-2">
+                Tithes, Offerings &amp; Seeds
+              </h2>
+              <p className="mt-3 text-sm text-[#52525B] leading-relaxed">
+                Remit your tithes, offerings, thanksgiving, and sanctuary support directly
+                to the church account and confirm your transfer online.
+              </p>
+              {givingConfig?.isConfigured && (
+                <div className="mt-4 p-3 rounded-lg bg-[#FAF9F6] border border-[#E5E0D8] text-xs space-y-0.5">
+                  <p className="font-medium text-[#18181B]">
+                    {givingConfig.primaryAccount.bankName}
+                  </p>
+                  <p className="font-mono text-sm font-semibold text-[#1B365D] tabular-nums">
+                    {givingConfig.primaryAccount.accountNumber}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="mt-6">
+              <Link
+                to="/give"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#1B365D] rounded-lg hover:bg-[#132744] transition-colors whitespace-nowrap"
+              >
+                <span>Give &amp; View Account</span>
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E5E0D8] rounded-xl p-7 flex flex-col justify-between">
             <div>
               <p className="text-xs font-medium tracking-[0.14em] uppercase text-[#8B6F47]">
                 Confidential Care
               </p>
-              <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#18181B] mt-2">
+              <h2 className="font-serif text-2xl font-semibold text-[#18181B] mt-2">
                 How Can We Pray For You?
               </h2>
-              <p className="mt-3 text-sm sm:text-base text-[#52525B] leading-relaxed">
+              <p className="mt-3 text-sm text-[#52525B] leading-relaxed">
                 Our pastors and prayer ministry count it a privilege to pray with you.
-                Requests are kept private and shared only according to your chosen
-                preference.
+                Requests are kept private according to your chosen preference.
               </p>
             </div>
             <div className="mt-6">
               <Link
                 to="/prayer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#1B365D] border border-[#1B365D] rounded-lg hover:bg-[#1B365D] hover:text-white transition-colors whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[#1B365D] border border-[#1B365D] rounded-lg hover:bg-[#1B365D] hover:text-white transition-colors whitespace-nowrap"
               >
                 <span>Submit Prayer Request</span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />

@@ -23,6 +23,21 @@ import {
   subscribeToFacebookVideoUpdates,
   syncFacebookVideosNow,
 } from './src/services/facebookVideos.ts';
+import {
+  buildTransferNarration,
+  createGivingFingerprint,
+  getDefaultGivingConfig,
+  isValidAccountNumber,
+  normalizeAccountNumber,
+  validateGivingSubmission,
+  type GivingConfig,
+  type GivingSubmissionInput,
+} from './src/utils/givingLogic.ts';
+import {
+  buildGivingEmailContent,
+  buildSubmissionEmailContent,
+  dispatchChurchEmail,
+} from './src/services/emailNotifier.ts';
 
 interface StoredSubmission {
   id: string;
@@ -34,6 +49,53 @@ const PORT = Number(process.env.PORT) || 3000;
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const SUBMISSIONS_FILE = path.join(DATA_DIR, 'submissions.json');
 const MEMBER_FORM_CONFIG_FILE = path.join(DATA_DIR, 'member-form-config.json');
+const GIVINGS_FILE = path.join(DATA_DIR, 'givings.json');
+
+interface StoredGivingRecord {
+  id: string;
+  submittedAt: string;
+  narration: string;
+  payload: Omit<GivingSubmissionInput, 'website'>;
+}
+
+async function readGivingConfig(): Promise<GivingConfig> {
+  const envBank = (process.env.CHURCH_BANK_NAME || '').trim();
+  const envAccountNumber = normalizeAccountNumber(process.env.CHURCH_ACCOUNT_NUMBER || '');
+  const envAccountName =
+    (process.env.CHURCH_ACCOUNT_NAME || '').trim() || "God's Palace Evangelical Ministry Worldwide";
+
+  if (envBank.length >= 2 && isValidAccountNumber(envAccountNumber)) {
+    return {
+      primaryAccount: {
+        bankName: envBank,
+        accountName: envAccountName,
+        accountNumber: envAccountNumber,
+      },
+      transferInstructions: getDefaultGivingConfig().transferInstructions,
+      isConfigured: true,
+      updatedAt: new Date().toISOString(),
+      source: 'env',
+    };
+  }
+
+  return getDefaultGivingConfig();
+}
+
+async function persistGivingRecord(entry: StoredGivingRecord): Promise<void> {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  let existing: StoredGivingRecord[] = [];
+  try {
+    const raw = await fs.readFile(GIVINGS_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      existing = parsed as StoredGivingRecord[];
+    }
+  } catch {
+    existing = [];
+  }
+  existing.push(entry);
+  await fs.writeFile(GIVINGS_FILE, JSON.stringify(existing, null, 2), 'utf8');
+}
 
 async function readMemberFormConfig(): Promise<MemberFormConfig> {
   const envUrl = (process.env.MEMBER_GOOGLE_FORM_URL || '').trim();
@@ -294,6 +356,86 @@ async function startServer() {
     res.json({ ok: true, config: getDefaultMemberFormConfig() });
   });
 
+  // --- Church Giving & Bank Transfer Account Endpoints ---
+  app.get('/api/giving-config', async (_req, res) => {
+    const config = await readGivingConfig();
+    res.json({ ok: true, config });
+  });
+
+  app.post('/api/givings', async (req, res) => {
+    const nowMs = Date.now();
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+    if (isRateLimited(clientIp, nowMs)) {
+      res.status(429).json({
+        ok: false,
+        error: 'Too many requests in a short time. Please wait a minute before trying again.',
+      });
+      return;
+    }
+
+    const validation = validateGivingSubmission(req.body);
+    if (validation.isSpam) {
+      res.status(400).json({ ok: false, error: 'Unable to process submission.' });
+      return;
+    }
+    if (!validation.valid || !validation.sanitized) {
+      res.status(400).json({
+        ok: false,
+        error: 'Please check the highlighted giving details and try again.',
+        errors: validation.errors,
+      });
+      return;
+    }
+
+    const fingerprint = `give|${createGivingFingerprint(validation.sanitized)}`;
+    if (isDuplicateSubmission(recentFingerprints, fingerprint, nowMs, 60_000)) {
+      res.status(409).json({
+        ok: false,
+        error: 'We already logged this giving confirmation a moment ago. God bless you!',
+      });
+      return;
+    }
+
+    const id = `GP-GIVE-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+    const submittedAt = new Date(nowMs).toISOString();
+    const narration = buildTransferNarration(
+      validation.sanitized.category,
+      validation.sanitized.giverName,
+      validation.sanitized.isAnonymous,
+    );
+
+    try {
+      await persistGivingRecord({
+        id,
+        submittedAt,
+        narration,
+        payload: validation.sanitized,
+      });
+      recentFingerprints.set(fingerprint, nowMs);
+
+      const emailResult = await dispatchChurchEmail(
+        buildGivingEmailContent(id, submittedAt, narration, validation.sanitized),
+      );
+
+      res.status(201).json({
+        ok: true,
+        id,
+        submittedAt,
+        narration,
+        emailDelivered: emailResult.delivered,
+        notificationEmail: emailResult.recipient,
+        message:
+          'Thank you for your faithful giving! Our finance team has received your transfer notification.',
+      });
+    } catch (err) {
+      console.error('Failed to record giving confirmation:', err);
+      res.status(500).json({
+        ok: false,
+        error: 'We could not record your giving confirmation right now. Please try again or reach us on WhatsApp.',
+      });
+    }
+  });
+
   // Single unified submission endpoint for Visitor, Prayer Request, and Contact forms.
   // Deliberately write-only (no public GET endpoint) so private prayer requests stay confidential.
   app.post('/api/submissions', async (req, res) => {
@@ -346,6 +488,10 @@ async function startServer() {
       });
       recentFingerprints.set(fingerprint, nowMs);
 
+      const emailResult = await dispatchChurchEmail(
+        buildSubmissionEmailContent(id, submittedAt, validation.sanitized),
+      );
+
       const confirmationMessage =
         validation.sanitized.type === 'prayer'
           ? 'Your prayer request has been received safely and routed according to your privacy preference.'
@@ -357,6 +503,8 @@ async function startServer() {
         ok: true,
         id,
         submittedAt,
+        emailDelivered: emailResult.delivered,
+        notificationEmail: emailResult.recipient,
         message: confirmationMessage,
       });
     } catch (err) {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { CheckCircle2, AlertCircle, Loader2, Lock } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, Lock, Mail } from 'lucide-react';
+import { churchConfig } from '../data/churchConfig';
 import {
   validateSubmission,
   type PrayerPrivacyPreference,
@@ -15,6 +16,9 @@ interface SubmissionFormProps {
 interface SubmissionReceipt {
   id: string;
   message: string;
+  emailDelivered?: boolean;
+  notificationEmail?: string;
+  mailtoHref?: string;
 }
 
 export function SubmissionForm({ mode, initialSubject = '' }: SubmissionFormProps) {
@@ -125,6 +129,8 @@ export function SubmissionForm({ mode, initialSubject = '' }: SubmissionFormProp
         ok?: boolean;
         id?: string;
         message?: string;
+        emailDelivered?: boolean;
+        notificationEmail?: string;
         error?: string;
         errors?: Record<string, string>;
       };
@@ -139,9 +145,26 @@ export function SubmissionForm({ mode, initialSubject = '' }: SubmissionFormProp
         return;
       }
 
+      const targetEmail = data.notificationEmail || churchConfig.contact.email;
+      const mailSubject =
+        mode === 'prayer'
+          ? `[Prayer Request] ${data.id || ''}`
+          : mode === 'visitor'
+            ? `[Plan Your Visit] ${fullName}`
+            : `[Contact Us] ${subject || 'Website Enquiry'}`;
+      const mailBody =
+        mode === 'prayer'
+          ? `Name: ${fullName || 'Anonymous'}\nContact: ${contactInfo || 'Not provided'}\nPrivacy: ${privacyPreference}\nReference: ${data.id || ''}\n\nPrayer Request:\n${prayerRequest}`
+          : mode === 'visitor'
+            ? `Full Name: ${fullName}\nPhone: ${phone}\nEmail: ${email || 'Not provided'}\nVisit Date: ${visitDate || 'Not specified'}\nReference: ${data.id || ''}\n\nMessage:\n${message || 'None'}`
+            : `Full Name: ${fullName}\nEmail: ${email}\nPhone: ${phone || 'Not provided'}\nSubject: ${subject}\nReference: ${data.id || ''}\n\nMessage:\n${message}`;
+
       setReceipt({
         id: data.id || 'RECEIVED',
         message: data.message || 'Your submission has been received.',
+        emailDelivered: Boolean(data.emailDelivered),
+        notificationEmail: targetEmail,
+        mailtoHref: `mailto:${encodeURIComponent(targetEmail)}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`,
       });
     } catch {
       setSubmitError(
@@ -176,18 +199,32 @@ export function SubmissionForm({ mode, initialSubject = '' }: SubmissionFormProp
             <p className="mt-2 text-[#52525B] leading-relaxed">{receipt.message}</p>
             <p className="mt-3 text-xs font-medium tracking-wide uppercase text-[#8B6F47] tabular-nums">
               Reference · {receipt.id}
+              {receipt.emailDelivered && receipt.notificationEmail
+                ? ` · Sent directly to ${receipt.notificationEmail}`
+                : ''}
             </p>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="mt-6 inline-flex items-center px-4 py-2 text-sm font-medium text-[#1B365D] border border-[#E5E0D8] rounded-lg hover:bg-[#F2EFE9] transition-colors whitespace-nowrap"
-            >
-              {mode === 'prayer'
-                ? 'Submit Another Prayer Request'
-                : mode === 'visitor'
-                  ? 'Submit Another Visit Note'
-                  : 'Send Another Message'}
-            </button>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              {!receipt.emailDelivered && receipt.mailtoHref && (
+                <a
+                  href={receipt.mailtoHref}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#1B365D] rounded-lg hover:bg-[#132744] transition-colors whitespace-nowrap"
+                >
+                  <Mail className="w-4 h-4" aria-hidden="true" />
+                  <span>Send Directly to {receipt.notificationEmail}</span>
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-[#1B365D] border border-[#E5E0D8] rounded-lg hover:bg-[#F2EFE9] transition-colors whitespace-nowrap"
+              >
+                {mode === 'prayer'
+                  ? 'Submit Another Prayer Request'
+                  : mode === 'visitor'
+                    ? 'Submit Another Visit Note'
+                    : 'Send Another Message'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
